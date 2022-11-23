@@ -299,7 +299,8 @@ class Table(QWidget):
                 self.label.clear()
                 # self.label.setText('Ошибка! Введите число')
                 self.table.item(r, 1).setText('100')
-        self.label.setText('Отлично! Продукты выбраны')
+        if self.products_chosen:
+            self.label.setText('Отлично! Продукты выбраны')
 
 
 def except_hook(cls, exception, traceback):
@@ -312,3 +313,4 @@ if __name__ == '__main__':
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec_())
+
