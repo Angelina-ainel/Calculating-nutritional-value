@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QApplication, QWidget, QTableWidgetItem, \
     QMainWindow, QVBoxLayout, QPushButton, QTableWidget, QLabel, QButtonGroup
 from openingWidget import Ui_Form
-from adding_products import Ui_Adding
+from adding_products2 import Ui_Adding
 from main_window import Ui_MainWindow
 from PyQt5.QtGui import QPixmap, QFont, QColor
 
@@ -78,6 +78,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.index_of_updated_dict = 0
         self.search_btn.clicked.connect(self.search_item)
         self.add_button.clicked.connect(self.add_item)
+        self.clear_btn.clicked.connect(self.clear_table)
 
     def make_design(self):
         self.product_buttons = QButtonGroup(self)
@@ -167,6 +168,17 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.statusbar.showMessage(f'Белков: {round(proteins, 1)}, жиров: {round(fats, 1)}, '
                                    f'углеводов: {round(carbs, 1)}, калорий: {round(calories, 1)}')
 
+    def clear_table(self):
+        for table in self.tables:
+            for product in table.products_chosen.keys():
+                item_list = table.table.findItems(product, Qt.MatchExactly)
+                for item in item_list:
+                    item.setBackground(QColor('#FFFFFF'))
+            table.products_chosen.clear()
+        self.make_dict().clear()
+        self.table.clearContents()
+        self.table.setRowCount(0)
+
     def add_item(self):
         self.widget_for_adding = AddProduct()
         self.widget_for_adding.show()
@@ -181,7 +193,14 @@ class AddProduct(QWidget, Ui_Adding):
         super(AddProduct, self).__init__()
         self.setupUi(self)
         self.con = sqlite3.connect("food_db.db")
+        self.load_categories()
         self.add_btn.clicked.connect(self.adding_to_database)
+
+    def load_categories(self):
+        cur = self.con.cursor()
+        query = 'SELECT russian_name FROM food_categories'
+        result = cur.execute(query).fetchall()
+        self.categories.addItems((t[0] for t in result))
 
     def adding_to_database(self):
         max_id = 505
@@ -195,7 +214,7 @@ class AddProduct(QWidget, Ui_Adding):
                 raise ItemsError
             self.con.cursor().execute(query, (self.product_name.text().capitalize(), float(self.proteins.text()),
                                               float(self.fats.text()), float(self.carbs.text()),
-                                              int(self.calories.text()), self.category.text(), max_id + 1))
+                                              int(self.calories.text()), self.categories.text(), max_id + 1))
             self.con.commit()
             max_id += 1
         except ValueError:
@@ -313,4 +332,3 @@ if __name__ == '__main__':
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec_())
-
